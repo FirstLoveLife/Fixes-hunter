@@ -1,0 +1,68 @@
+#+TITLE: find_fixes_grep.py – README
+#+AUTHOR: 
+#+OPTIONS: toc:nil num:nil
+
+* Overview
+  =find_fixes_grep.py= scans a Linux *git* repository for commits that /fix/
+  the commit *subjects* listed in an input file and, by default, recursively
+  follows the chain to discover if those *fix* commits were fixed again.
+
+* Requirements
+  - Python ≥ 3.8
+  - The =git= command‑line tool
+  - A local Linux kernel clone, e.g.:
+
+    #+begin_src bash
+      git clone https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git ~/linux
+    #+end_src
+
+* Input format
+  The subjects file *must* contain **one commit subject per line**; *do not*
+  include commit hashes.
+
+  #+begin_example
+  drm/amd/display: Fix null pointer dereference
+  net_sched: sch_sfq: don't allow 1 packet limit
+  #+end_example
+
+* Quick start
+  #+begin_src bash
+    # Search all refs from the last 10 years using every CPU core
+    python3 fixes_hunter.py subjects.txt ~/linux
+  #+end_src
+
+  Example output:
+
+  #+begin_example
+  net_sched: sch_sfq: don't allow 1 packet limit
+  ↳ fixed by b5bf046e2444 : net_sched: sch_sfq: don't allow 1 packet limit
+    ↳ fixed by 12c53a9e2f17 : sch_sfq: correctly handle zero‑length queues
+  #+end_example
+
+* Important options
+  | Option / shorthand | Purpose                                           | Default            |
+  |--------------------+---------------------------------------------------+--------------------|
+  | =-b=, =--branch=   | Search only the given branch/ref (repeatable)     | ~--all~            |
+  | =-s=, =--since=    | Limit history with ~git --since=~                 | ~10 years ago~     |
+  | =-i=, =--ignore-case= | Case‑insensitive matching                    | off                |
+  | =-j=, =--jobs=     | Number of parallel worker threads                | CPU core count     |
+  | =--no-recursive=   | Disable recursive chaining                        | *recursive ON*     |
+  | =-v=, =--verbose=  | Print git commands and progress                   | off                |
+
+* Examples
+  #+begin_src bash
+    # 1. Only search the 6.6 LTS branch, ignore case, use 8 workers
+    python3 fixes_hunter.py subjects.txt ~/linux \
+            -b stable/linux-6.6.y -i -j 8
+
+    # 2. Search master since 2022‑01‑01 with verbose output
+    python3 fixes_hunter.py subjects.txt ~/linux \
+            -b master -s 2022-01-01 -v
+  #+end_src
+
+* Notes
+  - Recursive mode is cycle‑safe: each commit hash is reported only once.
+  - Output order is asynchronous—results print as soon as they are found.
+  - For huge subject lists, you may throttle parallelism with =-j N= or place
+    the repository on a fast disk / ramdisk.
+
