@@ -1,9 +1,9 @@
-#+TITLE: find_fixes_grep.py – README
+#+TITLE: fixes_hunter.py – README
 #+AUTHOR: 
 #+OPTIONS: toc:nil num:nil
 
 * Overview
-  =find_fixes_grep.py= scans a Linux *git* repository for commits that /fix/
+  =fixes_hunter.py= scans a Linux *git* repository for commits that /fix/
   the commit *subjects* listed in an input file and, by default, recursively
   follows the chain to discover if those *fix* commits were fixed again.
 
